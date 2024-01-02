@@ -4,5 +4,9 @@ import { Text } from "react-native";
 export default function Viewer() {
   const { uuid } = useLocalSearchParams();
 
-  return <Text>{uuid}</Text>;
+  return (
+    <>
+      <Text>{uuid}</Text>
+    </>
+  );
 }
