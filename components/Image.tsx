@@ -1,87 +1,93 @@
+import React from "react";
+import { Dimensions } from "react-native";
+import { Image } from "expo-image";
 import {
+  PanGestureHandler,
+  PanGestureHandlerGestureEvent,
   PinchGestureHandler,
   PinchGestureHandlerGestureEvent,
-  State,
 } from "react-native-gesture-handler";
-import { Image } from "expo-image";
-import React from "react";
 import Animated, {
   useAnimatedGestureHandler,
   useAnimatedStyle,
   useSharedValue,
-  withTiming,
+  withSpring,
 } from "react-native-reanimated";
-import { Dimensions, StyleSheet } from "react-native";
 
 import hand from "../assets/images/main.png";
-
-const imageUri =
-  "https://images.unsplash.com/photo-1621569642780-4864752e847e?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=668&q=80";
 
 const AnimatedImage = Animated.createAnimatedComponent(Image);
 
 const { width, height } = Dimensions.get("window");
 
 export const ReImage = () => {
+  const translateX = useSharedValue(0);
+  const translateY = useSharedValue(0);
   const scale = useSharedValue(1);
-  const focalX = useSharedValue(0);
-  const focalY = useSharedValue(0);
+  const lastScale = useSharedValue(1);
 
   const pinchHandler =
     useAnimatedGestureHandler<PinchGestureHandlerGestureEvent>({
+      onStart: () => {
+        lastScale.value = scale.value;
+      },
       onActive: (event) => {
-        scale.value = event.scale;
-        focalX.value = event.focalX;
-        focalY.value = event.focalY;
+        const nextScale = event.scale * lastScale.value;
+
+        const newWidth = width * nextScale;
+        const newHeight = height * nextScale;
+
+        if (newWidth >= width && newHeight >= height) {
+          scale.value = withSpring(
+            nextScale,
+            { stiffness: 100, damping: 10, mass: 1 },
+            (scaled) =>
+              typeof scaled === "number"
+                ? Math.min(5, Math.max(0.5, scaled))
+                : scaled
+          );
+        }
       },
       onEnd: () => {
-        scale.value = withTiming(1);
+        lastScale.value = scale.value;
       },
     });
+
+  const panHandler = useAnimatedGestureHandler<
+    PanGestureHandlerGestureEvent,
+    { startX: number; startY: number }
+  >({
+    onStart: (_, ctx) => {
+      ctx.startX = translateX.value;
+      ctx.startY = translateY.value;
+    },
+    onActive: (event, ctx) => {
+      translateX.value = ctx.startX + event.translationX;
+      translateY.value = ctx.startY + event.translationY;
+    },
+    onEnd: () => {},
+  });
 
   const rStyle = useAnimatedStyle(() => {
     return {
       transform: [
-        { translateX: focalX.value },
-        { translateY: focalY.value },
-        { translateX: -width / 2 },
-        { translateY: -height / 2 },
+        { translateX: translateX.value },
+        { translateY: translateY.value },
         { scale: scale.value },
-        { translateX: -focalX.value },
-        { translateY: -focalY.value },
-        { translateX: width / 2 },
-        { translateY: height / 2 },
       ],
     };
   });
 
-  const focalPointStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ translateX: focalX.value }, { translateY: focalY.value }],
-    };
-  });
-
   return (
-    <PinchGestureHandler onGestureEvent={pinchHandler}>
+    <PanGestureHandler onGestureEvent={panHandler}>
       <Animated.View style={{ flex: 1 }}>
-        <AnimatedImage style={[{ flex: 1 }, rStyle]} source={hand} />
-        <Animated.View style={[styles.focalPoint, focalPointStyle]} />
+        <PinchGestureHandler onGestureEvent={pinchHandler}>
+          <AnimatedImage
+            source={hand}
+            style={[{ flex: 1, height, width }, rStyle]}
+          />
+        </PinchGestureHandler>
       </Animated.View>
-    </PinchGestureHandler>
+    </PanGestureHandler>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  focalPoint: {
-    ...StyleSheet.absoluteFillObject,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-  },
-});
