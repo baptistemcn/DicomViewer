@@ -1,6 +1,9 @@
 import { useLocalSearchParams, useNavigation } from "expo-router";
-import { useEffect, useMemo } from "react";
-import { Text } from "react-native";
+import { Image } from "expo-image";
+import { useEffect } from "react";
+import { View } from "react-native";
+
+import main from "../assets/images/main.png";
 
 export default function Viewer() {
   const { uuid } = useLocalSearchParams();
@@ -11,8 +14,19 @@ export default function Viewer() {
   }, [uuid]);
 
   return (
-    <>
-      <Text>{uuid}</Text>
-    </>
+    <View
+      style={{
+        flex: 1,
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      {/* <Text>{uuid}</Text> */}
+      <Image
+        source={main}
+        style={{ height: "100%", width: "100%", backgroundColor: "red" }}
+      />
+    </View>
   );
 }
