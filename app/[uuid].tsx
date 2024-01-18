@@ -1,9 +1,9 @@
+import React, { useEffect } from "react";
 import { useLocalSearchParams, useNavigation } from "expo-router";
-import { Image } from "expo-image";
-import { useEffect } from "react";
-import { View } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
-import main from "../assets/images/main.png";
+import { ReImage } from "../components/Image";
 
 export default function Viewer() {
   const { uuid } = useLocalSearchParams();
@@ -14,19 +14,10 @@ export default function Viewer() {
   }, [uuid]);
 
   return (
-    <View
-      style={{
-        flex: 1,
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
-      {/* <Text>{uuid}</Text> */}
-      <Image
-        source={main}
-        style={{ height: "100%", width: "100%", backgroundColor: "red" }}
-      />
-    </View>
+    <SafeAreaProvider>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <ReImage />
+      </GestureHandlerRootView>
+    </SafeAreaProvider>
   );
 }
